@@ -52,14 +52,22 @@ This is a Next.js application built with Firebase Studio that allows users to ge
 ## Project Structure
 
 -   `src/app/`: Contains the main application pages and layout (Next.js App Router).
--   `src/components/`: Reusable React components, including the main `picto-poem-page.tsx` and UI components from `shadcn/ui`.
--   `src/ai/`: Contains AI-related logic using Genkit.
-    -   `ai-instance.ts`: Configures the Genkit instance and plugins.
-    -   `flows/`: Defines the Genkit flows (`generate-poem-from-image.ts`) and server actions (`generate-song-from-poem.ts`).
+-   `src/components/`: Reusable React components.
+    -   `features/`: Application-specific feature components.
+    -   `ui/`: Reusable UI components from shadcn/ui.
+-   `src/ai/`: Contains AI-related logic.
+    -   `config/`: AI-specific configuration settings and prompt templates.
+    -   `services/`: AI service implementations for poem and song generation.
+    -   `utils/`: Helper functions for AI operations.
+    -   `flows/`: Defines the Genkit flows for AI processing.
+-   `src/types/`: TypeScript type definitions.
+-   `src/constants/`: Application constants and magic values.
+-   `src/services/`: API service interfaces and implementations.
+-   `src/config/`: Application configuration settings.
+-   `src/hooks/`: Custom React hooks.
 -   `src/lib/`: Utility functions.
--   `src/hooks/`: Custom React hooks (`use-toast.ts`, `use-mobile.ts`).
+-   `src/__tests__/`: Test files (for future testing implementations).
 -   `public/`: Static assets.
--   `styles/`: Global CSS (`globals.css`).
 
 ## Technologies Used
 

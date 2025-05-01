@@ -1,4 +1,4 @@
-import PictoPoemPage from '@/components/picto-poem-page';
+import PictoPoemPage from '@/components/features/picto-poem-page';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {

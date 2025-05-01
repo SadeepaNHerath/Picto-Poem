@@ -9,6 +9,11 @@
 
 import {ai} from '@/ai/ai-instance';
 import {z} from 'genkit';
+import { extractJsonFromResponse } from '../utils/ai-utils';
+
+// Constants for retry mechanism
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 1000; // 1 second
 
 const GeneratePoemFromImageInputSchema = z.object({
   photoDataUri: z
@@ -25,8 +30,67 @@ const GeneratePoemFromImageOutputSchema = z.object({
 });
 export type GeneratePoemFromImageOutput = z.infer<typeof GeneratePoemFromImageOutputSchema>;
 
+// Fallback poem templates based on common image categories
+const fallbackPoemTemplates = [
+  {
+    title: "Unseen Beauty",
+    content: "In pixels and light,\nA story unfolds gently,\nBeauty discovered.\n\nWhat the eyes perceive,\nThe heart interprets deeply,\nMoments captured still."
+  },
+  {
+    title: "Digital Whispers",
+    content: "Frozen in this frame\nColors speak what words cannot\nSilent eloquence.\n\nTime stands still for us\nIn this captured memory\nForever present."
+  },
+  {
+    title: "Beyond the Frame",
+    content: "What lies within view\nIs merely a fragment of\nUnfolding stories.\n\nThe image speaks soft\nOf moments that came before\nAnd those yet to come."
+  }
+];
+
+/**
+ * Utility function to wait for a specified delay
+ */
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Attempts to generate a poem with exponential backoff retry logic
+ */
+async function attemptWithRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES, backoffDelay = INITIAL_RETRY_DELAY): Promise<T> {
+  try {
+    return await fn();
+  } catch (error: any) {
+    if (error.message?.includes('503 Service Unavailable') && retries > 0) {
+      console.log(`AI service overloaded. Retrying in ${backoffDelay}ms... (${retries} retries left)`);
+      await delay(backoffDelay);
+      return attemptWithRetry(fn, retries - 1, backoffDelay * 2);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Selects a fallback poem based on optional style description
+ */
+function getFallbackPoem(styleDescription?: string): string {
+  // Simple selection logic - can be enhanced to match style description better
+  const index = styleDescription ? 
+    Math.abs(styleDescription.length % fallbackPoemTemplates.length) :
+    Math.floor(Math.random() * fallbackPoemTemplates.length);
+  
+  const template = fallbackPoemTemplates[index];
+  return `${template.title}\n\n${template.content}\n\n(Note: This is a fallback poem due to AI service unavailability)`;
+}
+
 export async function generatePoemFromImage(input: GeneratePoemFromImageInput): Promise<GeneratePoemFromImageOutput> {
-  return generatePoemFromImageFlow(input);
+  try {
+    return await attemptWithRetry(() => generatePoemFromImageFlow(input));
+  } catch (error) {
+    console.error('Failed to generate poem after retries:', error);
+    
+    // Provide a fallback poem when the AI service is unavailable
+    return {
+      poem: getFallbackPoem(input.styleDescription)
+    };
+  }
 }
 
 const generatePoemPrompt = ai.definePrompt({
@@ -66,6 +130,14 @@ const generatePoemFromImageFlow = ai.defineFlow<
   outputSchema: GeneratePoemFromImageOutputSchema,
 },
 async input => {
-  const {output} = await generatePoemPrompt(input);
-  return output!;
+  try {
+    const {output} = await generatePoemPrompt(input);
+    return output!;
+  } catch (error: any) {
+    // Enhanced error logging for debugging
+    console.error(`AI model error: ${error.message || 'Unknown error'}`);
+    
+    // Re-throw the error to be handled by the retry mechanism
+    throw error;
+  }
 });

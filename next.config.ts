@@ -50,9 +50,8 @@ const nextConfig: NextConfig = {
     // NEXT_PUBLIC_ANALYTICS_ID: process.env.ANALYTICS_ID,
   // },
 
-  // Disable instrumentation hook if not explicitly used, might help with Turbopack issues
+  // Experimental features
   experimental: {
-     instrumentationHook: false,
      // Add allowedDevOrigins here if needed for specific cross-origin development setups
      // allowedDevOrigins: ['6000-idx-studio-1746087021625.cluster-ubrd2huk7jh6otbgyei4h62ope.cloudworkstations.dev'],
    },
