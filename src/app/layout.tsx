@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans'; // Corrected import for Geist Sans
-// import { GeistMono } from 'geist/font/mono';   // Removed unresolved import
+// Removed GeistMono import as it was causing resolution errors and wasn't used
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"; // Import Toaster
 
@@ -23,8 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable}`}> {/* Removed GeistMono variable */}
-      <body className={`antialiased font-sans`}> {/* Use font variable */}
+    // Apply the Geist Sans font variable to the html tag
+    <html lang="en" className={`${GeistSans.variable}`}>
+      {/* Ensure the font-sans utility class uses the variable */}
+      <body className={`antialiased font-sans`}>
         {children}
         <Toaster /> {/* Ensure Toaster is included for notifications */}
       </body>

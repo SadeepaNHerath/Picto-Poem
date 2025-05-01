@@ -92,7 +92,8 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-geist-sans), sans-serif; /* Apply Geist Sans font */
+    /* Use the Geist Sans variable set in layout.tsx */
+    font-family: var(--font-geist-sans), sans-serif;
     min-height: 100vh; /* Ensure body takes full viewport height */
     display: flex; /* Helps footer stick to bottom if content is short */
     flex-direction: column;

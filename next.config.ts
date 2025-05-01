@@ -36,11 +36,8 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Ensure server actions are enabled (required for Genkit flows/server functions)
-  serverActions: {
-    // Optional: Increase body size limit if handling large file uploads (e.g., images)
-    // bodySizeLimit: '4mb', // Example: Set to 4MB
-  },
+  // Server Actions are enabled by default in recent versions of Next.js
+  // The `serverActions` key is no longer needed and can cause errors.
 
   // Environment variables:
   // By default, Next.js exposes variables prefixed with NEXT_PUBLIC_ to the client.
@@ -52,6 +49,14 @@ const nextConfig: NextConfig = {
     // Example: Exposing a non-sensitive variable to the client
     // NEXT_PUBLIC_ANALYTICS_ID: process.env.ANALYTICS_ID,
   // },
+
+  // Disable instrumentation hook if not explicitly used, might help with Turbopack issues
+  experimental: {
+     instrumentationHook: false,
+     // Add allowedDevOrigins here if needed for specific cross-origin development setups
+     // allowedDevOrigins: ['6000-idx-studio-1746087021625.cluster-ubrd2huk7jh6otbgyei4h62ope.cloudworkstations.dev'],
+   },
+
 
 };
 
