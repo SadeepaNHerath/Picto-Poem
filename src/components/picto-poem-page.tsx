@@ -199,8 +199,7 @@ export default function PictoPoemPage() {
     });
   };
 
-  const handleSongSubmit = (event: FormEvent) => {
-      event.preventDefault(); // Prevent default form submission
+  const handleSongSubmit = () => { // No event needed as it's triggered by button click
       if (!poem) {
         setError('Please generate a poem first before creating a song.');
         toast({
@@ -261,7 +260,8 @@ export default function PictoPoemPage() {
             </Alert>
         )}
 
-        <form onSubmit={handlePoemSubmit}> {/* Wrap relevant parts in form */}
+        {/* Outer form for image upload and poem generation */}
+        <form onSubmit={handlePoemSubmit}>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 p-4 md:p-6">
             {/* Left Column: Image & Style */}
             <div className="space-y-4 flex flex-col">
@@ -327,7 +327,7 @@ export default function PictoPoemPage() {
                 <section aria-labelledby="poem-generation-title" className="flex flex-col">
                     <h2 id="poem-generation-title" className="text-xl font-semibold text-foreground mb-2">3. Generate Poem</h2>
                     <Button
-                        type="submit" // Use submit type for form
+                        type="submit" // Use submit type for the outer form
                         disabled={!imageDataUri || isGenerating}
                         className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                         aria-label={isPoemPending ? "Generating Poem" : "Generate Poem"}
@@ -363,25 +363,23 @@ export default function PictoPoemPage() {
                     </div>
                 </section>
 
-                {/* Song Generation */}
+                {/* Song Generation - No longer a form */}
                 <section aria-labelledby="song-generation-title" className="flex flex-col">
                     <h2 id="song-generation-title" className="text-xl font-semibold text-foreground mb-2">4. Generate Song</h2>
-                    {/* Wrap button in a form for consistency, though it triggers via onClick */}
-                    <form onSubmit={handleSongSubmit}>
-                         <Button
-                            type="submit"
-                            disabled={!poem || isGenerating}
-                            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 transition-colors"
-                            aria-label={isSongPending ? "Generating Song" : "Generate Song from Poem"}
-                            aria-live="polite"
-                         >
-                            {isSongPending ? (
-                                <> <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Song... </>
-                            ) : (
-                            <> <Music className="mr-2 h-4 w-4"/> Generate Song from Poem</>
-                            )}
-                        </Button>
-                    </form>
+                     <Button
+                        type="button" // Change type to button, not submit
+                        onClick={handleSongSubmit} // Call handler directly on click
+                        disabled={!poem || isGenerating}
+                        className="w-full bg-accent text-accent-foreground hover:bg-accent/90 transition-colors"
+                        aria-label={isSongPending ? "Generating Song" : "Generate Song from Poem"}
+                        aria-live="polite"
+                     >
+                        {isSongPending ? (
+                            <> <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Song... </>
+                        ) : (
+                        <> <Music className="mr-2 h-4 w-4"/> Generate Song from Poem</>
+                        )}
+                    </Button>
 
                     {/* Song Player */}
                     <div className="mt-4 flex-grow flex flex-col">
@@ -415,7 +413,7 @@ export default function PictoPoemPage() {
                 </section>
             </div>
             </CardContent>
-        </form> {/* Close form */}
+        </form> {/* Close the outer form */}
 
         <CardFooter className="text-center text-muted-foreground text-xs p-4 border-t bg-card">
             Poem by Google Gemini via Genkit | Song by TopMediai API
