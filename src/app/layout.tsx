@@ -1,21 +1,20 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans'; // Corrected import for Geist Sans
+import { GeistMono } from 'geist/font/mono';   // Corrected import for Geist Mono
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"; // Import Toaster
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
-
 export const metadata: Metadata = {
-  title: 'PictoPoem', // Update title
-  description: 'Generate poems from your images.', // Update description
+  title: {
+    default: 'PictoPoem',
+    template: '%s | PictoPoem',
+  },
+  description: 'Generate poems from your images and turn them into songs with AI.',
+  keywords: ['AI', 'poem generator', 'song generator', 'image to poem', 'image to song', 'creative AI', 'Next.js', 'Genkit', 'TopMediai'],
+  authors: [{ name: 'Firebase Studio AI' }],
+  // Add other relevant metadata tags if needed
+  // openGraph: { ... },
+  // twitter: { ... },
 };
 
 export default function RootLayout({
@@ -24,10 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+      <body className={`antialiased font-sans`}> {/* Use font variable */}
         {children}
-        <Toaster /> {/* Add Toaster component here */}
+        <Toaster /> {/* Ensure Toaster is included for notifications */}
       </body>
     </html>
   );
