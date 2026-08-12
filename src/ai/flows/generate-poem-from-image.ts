@@ -9,7 +9,6 @@
 
 import {ai} from '@/ai/ai-instance';
 import {z} from 'genkit';
-import { extractJsonFromResponse } from '../utils/ai-utils';
 
 // Constants for retry mechanism
 const MAX_RETRIES = 3;
