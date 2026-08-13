@@ -1,18 +1,6 @@
 'use server';
-/**
- * @fileOverview An AI agent that generates a poem based on an image.
- *
- * - generatePoemFromImage - A function that handles the poem generation process.
- * - GeneratePoemFromImageInput - The input type for the generatePoemFromImage function.
- * - GeneratePoemFromImageOutput - The return type for the generatePoemFromImage function.
- */
 
-import {ai} from '@/ai/ai-instance';
-import {z} from 'genkit';
-
-// Constants for retry mechanism
-const MAX_RETRIES = 3;
-const INITIAL_RETRY_DELAY = 1000; // 1 second
+import { z } from 'zod';
 
 const GeneratePoemFromImageInputSchema = z.object({
   photoDataUri: z
@@ -29,114 +17,116 @@ const GeneratePoemFromImageOutputSchema = z.object({
 });
 export type GeneratePoemFromImageOutput = z.infer<typeof GeneratePoemFromImageOutputSchema>;
 
-// Fallback poem templates based on common image categories
-const fallbackPoemTemplates = [
-  {
-    title: "Unseen Beauty",
-    content: "In pixels and light,\nA story unfolds gently,\nBeauty discovered.\n\nWhat the eyes perceive,\nThe heart interprets deeply,\nMoments captured still."
-  },
-  {
-    title: "Digital Whispers",
-    content: "Frozen in this frame\nColors speak what words cannot\nSilent eloquence.\n\nTime stands still for us\nIn this captured memory\nForever present."
-  },
-  {
-    title: "Beyond the Frame",
-    content: "What lies within view\nIs merely a fragment of\nUnfolding stories.\n\nThe image speaks soft\nOf moments that came before\nAnd those yet to come."
-  }
+const POEM_MODELS = [
+  'gemini-3.1-flash-lite',
+  'gemini-3-flash-preview',
+  'gemini-flash-latest',
 ];
+const REQUEST_TIMEOUT_MS = 12_000;
 
-/**
- * Utility function to wait for a specified delay
- */
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+function parseDataUri(dataUri: string): { mimeType: string; data: string } {
+  const match = dataUri.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) {
+    throw new Error('Invalid image data. Please upload the image again.');
+  }
+  return { mimeType: match[1], data: match[2] };
+}
 
-/**
- * Attempts to generate a poem with exponential backoff retry logic
- */
-async function attemptWithRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES, backoffDelay = INITIAL_RETRY_DELAY): Promise<T> {
-  try {
-    return await fn();
-  } catch (error: any) {
-    if (error.message?.includes('503 Service Unavailable') && retries > 0) {
-      console.log(`AI service overloaded. Retrying in ${backoffDelay}ms... (${retries} retries left)`);
-      await delay(backoffDelay);
-      return attemptWithRetry(fn, retries - 1, backoffDelay * 2);
+function buildPrompt(styleDescription?: string): string {
+  const style = styleDescription?.trim()
+    ? `\nWrite it in this style: ${styleDescription.trim()}`
+    : '';
+  return `You are a poet. Write an original poem inspired by this image.
+Capture mood, colors, and story. 8-14 lines. Include a short title on the first line.${style}
+
+Return only the title and poem text. No extra commentary.`;
+}
+
+async function generateWithModel(
+  model: string,
+  apiKey: string,
+  mimeType: string,
+  data: string,
+  prompt: string
+): Promise<string> {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { inline_data: { mime_type: mimeType, data } },
+              { text: prompt },
+            ],
+          },
+        ],
+      }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     }
-    throw error;
-  }
-}
+  );
 
-/**
- * Selects a fallback poem based on optional style description
- */
-function getFallbackPoem(styleDescription?: string): string {
-  // Simple selection logic - can be enhanced to match style description better
-  const index = styleDescription ? 
-    Math.abs(styleDescription.length % fallbackPoemTemplates.length) :
-    Math.floor(Math.random() * fallbackPoemTemplates.length);
-  
-  const template = fallbackPoemTemplates[index];
-  return `${template.title}\n\n${template.content}\n\n(Note: This is a fallback poem due to AI service unavailability)`;
-}
-
-export async function generatePoemFromImage(input: GeneratePoemFromImageInput): Promise<GeneratePoemFromImageOutput> {
+  const raw = await response.text();
+  let parsed: {
+    error?: { message?: string; status?: string };
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  } = {};
   try {
-    return await attemptWithRetry(() => generatePoemFromImageFlow(input));
-  } catch (error) {
-    console.error('Failed to generate poem after retries:', error);
-    
-    // Provide a fallback poem when the AI service is unavailable
-    return {
-      poem: getFallbackPoem(input.styleDescription)
-    };
+    parsed = raw ? JSON.parse(raw) : {};
+  } catch {
+    throw new Error(`Poem service returned an invalid response (${response.status}).`);
   }
+
+  if (!response.ok) {
+    const message = parsed.error?.message || `HTTP ${response.status}`;
+    throw new Error(message);
+  }
+
+  const text = parsed.candidates?.[0]?.content?.parts
+    ?.map((part) => part.text || '')
+    .join('')
+    .trim();
+  if (!text) {
+    throw new Error('The model did not return a poem. Try another image.');
+  }
+  return text;
 }
 
-const generatePoemPrompt = ai.definePrompt({
-  name: 'generatePoemPrompt',
-  input: {
-    schema: z.object({
-      photoDataUri: z
-        .string()
-        .describe(
-          "A photo, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-        ),
-      styleDescription: z.string().optional().describe('Optional description of the desired poem style.'),
-    }),
-  },
-  output: {
-    schema: z.object({
-      poem: z.string().describe('The generated poem.'),
-    }),
-  },
-  prompt: `You are a poet skilled at creating poems inspired by images.  Analyze the visual elements, mood, and overall aesthetic of the image provided. Create a poem that reflects these aspects. The poem should evoke the same feelings as the image.
-
-{{#if styleDescription}}
-Consider the following style description: {{{styleDescription}}}
-{{/if}}
-
-Image: {{media url=photoDataUri}}
-
-Poem:`, // The media helper here ensures the image data is passed correctly
-});
-
-const generatePoemFromImageFlow = ai.defineFlow<
-  typeof GeneratePoemFromImageInputSchema,
-  typeof GeneratePoemFromImageOutputSchema
->({
-  name: 'generatePoemFromImageFlow',
-  inputSchema: GeneratePoemFromImageInputSchema,
-  outputSchema: GeneratePoemFromImageOutputSchema,
-},
-async input => {
-  try {
-    const {output} = await generatePoemPrompt(input);
-    return output!;
-  } catch (error: any) {
-    // Enhanced error logging for debugging
-    console.error(`AI model error: ${error.message || 'Unknown error'}`);
-    
-    // Re-throw the error to be handled by the retry mechanism
-    throw error;
+export async function generatePoemFromImage(
+  input: GeneratePoemFromImageInput
+): Promise<GeneratePoemFromImageOutput> {
+  const parsedInput = GeneratePoemFromImageInputSchema.safeParse(input);
+  if (!parsedInput.success) {
+    throw new Error('Invalid input. Please upload an image and try again.');
   }
-});
+
+  const apiKey = process.env.GOOGLE_GENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error('Poem generation is not configured. Missing GOOGLE_GENAI_API_KEY.');
+  }
+
+  const { mimeType, data } = parseDataUri(parsedInput.data.photoDataUri);
+  const prompt = buildPrompt(parsedInput.data.styleDescription);
+
+  let lastError = 'Poem generation failed.';
+  for (const model of POEM_MODELS) {
+    try {
+      const poem = await generateWithModel(model, apiKey, mimeType, data, prompt);
+      return GeneratePoemFromImageOutputSchema.parse({ poem });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      lastError = message;
+      console.error(`Poem model ${model} failed:`, message);
+    }
+  }
+
+  if (/high demand|unavailable|503|overloaded|timeout|TimeoutError/i.test(lastError)) {
+    throw new Error('The poem service is busy. Please try again in a few seconds.');
+  }
+  throw new Error(lastError);
+}

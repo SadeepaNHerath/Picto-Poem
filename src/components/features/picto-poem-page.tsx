@@ -33,7 +33,7 @@ import {
   FileWarning,
   Info,
 } from "lucide-react";
-import { readFileAsDataURI } from "@/lib/utils";
+import { fileToCompressedDataUri } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
 
 // Constants for Limits
@@ -110,7 +110,7 @@ export default function PictoPoemPage() {
 
     // Read and set image data
     try {
-      const dataUri = await readFileAsDataURI(file);
+      const dataUri = await fileToCompressedDataUri(file);
       setImagePreview(URL.createObjectURL(file)); // Use object URL for preview efficiency
       setImageDataUri(dataUri);
     } catch (err) {
@@ -165,7 +165,7 @@ export default function PictoPoemPage() {
             `Sample image is not a valid image type (${blob.type}).`,
           );
         }
-        return readFileAsDataURI(blob);
+        return fileToCompressedDataUri(blob);
       })
       .then((dataUri) => {
         // Successfully loaded and converted

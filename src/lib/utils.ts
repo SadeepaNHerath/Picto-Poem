@@ -57,3 +57,32 @@ export function readFileAsDataURI(file: Blob): Promise<string> {
     }
   });
 }
+
+/**
+ * Shrinks an image so Gemini requests stay small enough for Vercel Hobby.
+ */
+export async function fileToCompressedDataUri(
+  file: Blob,
+  maxDimension = 1280,
+  quality = 0.72
+): Promise<string> {
+  if (typeof createImageBitmap !== 'function') {
+    return readFileAsDataURI(file);
+  }
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  if (!context) {
+    bitmap.close();
+    return readFileAsDataURI(file);
+  }
+  context.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+  return canvas.toDataURL('image/jpeg', quality);
+}
