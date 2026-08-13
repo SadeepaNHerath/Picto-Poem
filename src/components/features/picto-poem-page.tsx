@@ -285,9 +285,18 @@ export default function PictoPoemPage() {
     <main className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col items-center bg-secondary/50">
       <Card className="w-full max-w-4xl shadow-lg rounded-xl overflow-hidden">
         <CardHeader className="text-center bg-card p-6 border-b">
-          <CardTitle className="text-3xl md:text-4xl font-bold text-primary">
-            PictoPoem
-          </CardTitle>
+          <div className="flex flex-col items-center gap-3">
+            <img
+              src="/logo.svg"
+              alt="PictoPoem logo"
+              width={64}
+              height={64}
+              className="rounded-2xl shadow-sm"
+            />
+            <CardTitle className="text-3xl md:text-4xl font-bold text-primary">
+              PictoPoem
+            </CardTitle>
+          </div>
           <CardDescription className="text-muted-foreground mt-1">
             Turn your images into beautiful poems and songs with AI
           </CardDescription>

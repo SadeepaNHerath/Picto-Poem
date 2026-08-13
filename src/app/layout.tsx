@@ -9,6 +9,11 @@ export const metadata: Metadata = {
     template: '%s | PictoPoem',
   },
   description: 'Generate poems from your images and turn them into songs with AI.',
+  icons: {
+    icon: '/logo.svg',
+    shortcut: '/logo.svg',
+    apple: '/logo.svg',
+  },
 };
 
 export default function RootLayout({

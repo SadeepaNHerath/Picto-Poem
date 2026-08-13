@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PictoPoem">
+  <rect width="64" height="64" rx="16" fill="#7CB87F"/>
+  <rect x="9" y="9" width="46" height="33" rx="7" fill="#F4FBF5"/>
+  <circle cx="20.5" cy="20" r="4.5" fill="#FFB347"/>
+  <path d="M9 33.5c6.2-6 12.4-9.8 18.2-6.4 3.8 2.2 6.6 1.4 10.1-1.6C42.4 22.2 47 21 55 25.5V35c0 3.9-3.1 7-7 7H16c-3.9 0-7-3.1-7-7v-1.5Z" fill="#5A9E62"/>
+  <path d="M9 36.2c8.4-4.6 15.8-3.2 22.4 1.1 5.4 3.5 11.2 3.8 23.6-1.4V35c0 3.9-3.1 7-7 7H16c-3.9 0-7-3.1-7-7v-1.8Z" fill="#4E8A56"/>
+  <rect x="12" y="47" width="22" height="3.2" rx="1.6" fill="#F4FBF5"/>
+  <rect x="12" y="53.2" width="14" height="3.2" rx="1.6" fill="#F4FBF5"/>
+  <g fill="#FFB347" transform="translate(38.5 43.5)">
+    <ellipse cx="5.2" cy="13.2" rx="5.2" ry="3.6"/>
+    <rect x="9.2" y="0.4" width="2.6" height="13.2" rx="1"/>
+    <path d="M11.8.4c4.4 1.2 7.2 3.4 7.2 7.1h-2.8c0-2.2-1.6-3.6-4.4-4.5V.4Z"/>
+  </g>
+</svg>
