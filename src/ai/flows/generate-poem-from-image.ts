@@ -33,13 +33,27 @@ function parseDataUri(dataUri: string): { mimeType: string; data: string } {
 }
 
 function buildPrompt(styleDescription?: string): string {
-  const style = styleDescription?.trim()
-    ? `\nWrite it in this style: ${styleDescription.trim()}`
-    : '';
-  return `You are a poet. Write an original poem inspired by this image.
-Capture mood, colors, and story. 8-14 lines. Include a short title on the first line.${style}
+  const requestedStyle = styleDescription?.trim();
+  const form = requestedStyle
+    ? `Use this poetic form or mood: ${requestedStyle}.`
+    : 'Use lyric free verse: 2 or 3 short stanzas, 8 to 14 lines total.';
 
-Return only the title and poem text. No extra commentary.`;
+  return `Write a POEM about this image. Not a story. Not a paragraph. Not a caption.
+
+Rules:
+- First line is a short title only.
+- Then a blank line.
+- Then the poem, with a line break after every line.
+- Separate stanzas with a blank line.
+- Each line should be short (about 3 to 10 words).
+- Use imagery, metaphor, sound, and feeling.
+- Do not narrate events in full sentences like a story.
+- Do not write prose, essays, or scene descriptions.
+- No quotation marks around the poem.
+- No labels like "Title:" or "Poem:".
+${form}
+
+Return only the title and the poem.`;
 }
 
 async function generateWithModel(
@@ -58,6 +72,17 @@ async function generateWithModel(
         'x-goog-api-key': apiKey,
       },
       body: JSON.stringify({
+        systemInstruction: {
+          parts: [
+            {
+              text: 'You are a lyric poet. You only write poems with short lineated verse. You never write stories, prose, or paragraphs.',
+            },
+          ],
+        },
+        generationConfig: {
+          temperature: 0.95,
+          maxOutputTokens: 400,
+        },
         contents: [
           {
             parts: [
